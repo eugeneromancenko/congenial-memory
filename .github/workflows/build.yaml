@@ -46,8 +46,8 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ env.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
+        # building and pushing seems to be okay with my user, but list images operation is not allowed, missing ecr:ListImages action. 
         run: |
-          # A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
           docker push --all-tags $REGISTRY/$REPOSITORY
           

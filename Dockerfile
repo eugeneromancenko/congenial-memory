@@ -1,15 +1,21 @@
-FROM python:3.8-slim-buster 
+FROM python:3.8-slim-buster
 
-WORKDIR /app
+# Create a non-root user
+RUN adduser --disabled-password --gecos "" appuser
+WORKDIR /home/appuser
 
-ENV FLASK_APP=hello
+# Copy the requirements file and install the dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-ENV FLASK_RUN_HOST=0.0.0.0
+# Copy the application code setup.py
+COPY setup.py .
 
-COPY requirements.txt requirements.txt
+# Change to the non-root user
+USER appuser
 
-RUN pip3 install -r requirements.txt
+# Expose the port that Flask runs on
+EXPOSE 5000
 
-COPY . .
-
-CMD [ "python3", "-m" , "flask", "run"]
+# Set the default command for the container
+CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
