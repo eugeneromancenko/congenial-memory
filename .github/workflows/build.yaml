@@ -1,0 +1,56 @@
+name: Docker build and Push to ECR
+on:
+  push:
+    branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
+env:
+  # we ask you to exclusively use the eu-west-3 Paris AWS region.
+  AWS_REGION: eu-west-3
+  # ECR configuration
+  ECR_REPOSITORY: congenial-memory
+
+jobs:
+  docker-build:
+    name: Docker Build and Push
+    # The ubuntu-latest label currently uses the Ubuntu 22.04 runner image. -> https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        # This action checks-out your repository -> docs https://github.com/actions/checkout
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        # Configure AWS credential environment variables -> docs https://github.com/aws-actions/configure-aws-credentials 
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          # Normally best way would be using GitHub's OIDC provider to get short-lived credentials needed for your actions. 
+          # Specifying role-to-assume without providing an aws-access-key-id
+          # as per this doc https://github.com/aws-actions/configure-aws-credentials 
+
+          # But for this task we've using my user key / access key
+          aws-access-key-id:  ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key:  ${{ secrets.AWS_SECRET_KEY_ID }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        # Logs in the local Docker client to one or more Amazon ECR Private registries or an Amazon ECR Public registry.
+        # https://github.com/aws-actions/amazon-ecr-login
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        id: build-image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.
+          docker build -t ${{ env.ECR_REPOSITORY }}-${{ github.run_id }}
+          docker tag $REGISTRY/$REPOSITORY:latest
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$REPOSITORY:latest
+          
