@@ -1,11 +1,13 @@
-provider "aws" {
-  version = "~> 2.0"
-  region  = "eu-west-3"
+module "ecs_cluster" {
+  source = "./modules/ecs-cluster"
+
+  cluster_name = "${var.project}-cluster"
 }
 
-terraform {
-  required_version = "~> 0.12.0"
-}
+
+##############################################
+########### Data #############################
+##############################################
 
 data "aws_iam_role" "task_ecs" {
   name = "ecsTaskExecutionRole"
@@ -15,6 +17,10 @@ data "aws_vpc" "default_vpc" {
   default = true
 }
 
-data "aws_subnet_ids" "subnets" {
-  vpc_id = "${data.aws_vpc.default_vpc.id}"
+# The aws_subnet_ids data source has been deprecated and will be removed in a future version. Use the aws_subnets data source instead: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/subnets
+data "aws_subnets" "subnet" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default_vpc.id]
+  }
 }
