@@ -1,0 +1,59 @@
+
+FROM python:3.11-alpine3.17 AS builder
+
+# Install busybox
+RUN apk add --no-cache busybox
+
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache zlib-dev libjpeg-turbo-dev libpng-dev
+RUN apk add --no-cache libffi-dev openssl-dev
+
+# copy dependencies
+COPY ./requirements.txt ./setup.py ./
+
+# install dependencies
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && pip freeze \
+    && pip freeze | grep flask
+
+# Build app
+COPY ./hello /app/hello
+COPY ./tests /app/tests
+RUN python setup.py install --root=/install
+
+# Final image
+FROM python:3.11-alpine3.17
+
+# Create appuser and give /flaskapp owner rights
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+WORKDIR /flaskapp
+COPY --from=builder /install /
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    FLASK_APP=./flaskapp/hello \
+    FLASK_ENV=production \
+    FLASK_RUN_HOST=0.0.0.0 \
+    APP_USER=appuser \
+    APP_GROUP=appgroup
+
+# Copy entrypoint script and app files
+COPY ./entrypoint.sh ./
+COPY ./hello /flaskapp/hello
+COPY ./tests /flaskapp/tests
+RUN chown -R appuser:appgroup /flaskapp
+RUN chmod +x entrypoint.sh
+
+# Switch to app user
+USER appuser
+
+# Expose port 5000
+EXPOSE 5000
+
+# Use entrypoint script to start app
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["python", "-m", "flask", "run"]

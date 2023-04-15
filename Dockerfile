@@ -1,21 +1,29 @@
-FROM python:3.8-slim-buster
+FROM python:3.11-slim-buster
 
-# Create a non-root user
-RUN adduser --disabled-password --gecos "" appuser
-WORKDIR /home/appuser
+WORKDIR /flaskapp
 
-# Copy the requirements file and install the dependencies
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# create appuser and give /flaskapp owner rights
+RUN useradd -m -r appuser && \
+    chown appuser /flaskapp
 
-# Copy the application code setup.py
-COPY setup.py .
+# copy dependencies 
+COPY ./requirements.txt ./setup.py ./
 
-# Change to the non-root user
+# install dependencies
+RUN pip install --upgrade pip \
+    && pip install -r requirements.txt
+
+# copy hello and test folders
+COPY ./hello /flaskapp/hello
+COPY ./tests /flaskapp/tests
+
+# install flask app
+RUN python setup.py install
+
+# set my appuser
 USER appuser
-
-# Expose the port that Flask runs on
+ENV FLASK_APP=./hello
 EXPOSE 5000
 
-# Set the default command for the container
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+# run app on host
+ENTRYPOINT [ "flask", "run", "--host=0.0.0.0" ]
