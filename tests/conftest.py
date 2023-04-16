@@ -20,4 +20,4 @@ def client(app):
     Create a test client for the Hello World app..
     """
     test_client = app.test_client()
-    return test_client()
+    return test_client
