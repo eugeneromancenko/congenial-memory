@@ -4,15 +4,17 @@
 name: Python package
 
 on:
+  # only runs on PR
   pull_request:
     branches: [ "main" ]
 
 jobs:
-  build:
+  pytest:
 
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # This ensures that the code works correctly across different Python versions and helps catch any version-specific issues or bugs.
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
 
     steps:
@@ -34,4 +36,4 @@ jobs:
           ruff --format=github --target-version=py37 .
       - name: Test with pytest
         run: |
-          pytest
+          python -m pytest
