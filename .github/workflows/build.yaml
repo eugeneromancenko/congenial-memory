@@ -14,7 +14,6 @@ env:
   ECS_CLUSTER: congenial-memory-cluster
   ECS_TASK_DEF: congenial-memory-family
   ECS_CONTAINER: congenial-memory-app
-  IMAGE_TAG: latest
 
 jobs:
   docker-build:
@@ -66,13 +65,17 @@ jobs:
 
       - name: Fill in the new image ID in the AWS ECS task definition
         id: task-def
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
         # Inserts a container image URI into an Amazon ECS task definition JSON file.
         # https://github.com/aws-actions/amazon-ecs-render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_CONTAINER }}
-          image: ${{ env.IMAGE_TAG }}
+          image: $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       - name: Deploy AWS ECS task definition
         # Registers an Amazon ECS task definition and deploys it to an ECS service.
