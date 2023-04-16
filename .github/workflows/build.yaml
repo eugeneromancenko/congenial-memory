@@ -14,10 +14,11 @@ env:
   ECS_CLUSTER: congenial-memory-cluster
   ECS_TASK_DEF: congenial-memory-family
   ECS_CONTAINER: congenial-memory-app
+  IMAGE_TAG: latest
 
 jobs:
   docker-build:
-    name: Docker Build and Push
+    name: Docker Build , Push and Deploy to ECS Fargate
     # The ubuntu-latest label currently uses the Ubuntu 22.04 runner image. -> https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners
     runs-on: ubuntu-latest
 
@@ -68,7 +69,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ env.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
         # Inserts a container image URI into an Amazon ECS task definition JSON file.
         # https://github.com/aws-actions/amazon-ecs-render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
