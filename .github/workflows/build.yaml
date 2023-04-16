@@ -9,12 +9,13 @@ env:
   AWS_REGION: eu-west-3
   # ECR configuration
   ECR_REPOSITORY: congenial-memory
+  # Registry prefix
+  ECR_REGISTRY_PREFIX: 303981612052.dkr.ecr.eu-west-3.amazonaws.com
   # ECS configuration
   ECS_SERVICE: congenial-memory-service
   ECS_CLUSTER: congenial-memory-cluster
   ECS_TASK_DEF: congenial-memory-family
   ECS_CONTAINER: congenial-memory-app
-  # IMAGE_TAG: latest
 
 jobs:
   docker-build:
@@ -44,6 +45,7 @@ jobs:
         id: login-ecr
         # Logs in the local Docker client to one or more Amazon ECR Private registries or an Amazon ECR Public registry.
         # https://github.com/aws-actions/amazon-ecr-login
+        # !!! If logging into multiple registries on ECR Private, this output will not be set.
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build, tag, and push docker image to Amazon ECR
@@ -77,7 +79,8 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_CONTAINER }}
-          image: ${{ steps.build-image.outputs.image }}
+          #  "303981612052.dkr.ecr.eu-west-3.amazonaws.com/congenial-memory:latest"
+          image: ${{ env.ECR_REGISTRY_PREFIX }}${{ steps.build-image.outputs.image }}
 
       - name: Deploy AWS ECS task definition
         # Registers an Amazon ECS task definition and deploys it to an ECS service.
