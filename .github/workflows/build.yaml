@@ -3,14 +3,17 @@ name: Docker build and Push to ECR
 on:
   push:
     branches: [ main ]
-  # pull_request:
-  #   branches: [ main ]
 
 env:
   # we ask you to exclusively use the eu-west-3 Paris AWS region.
   AWS_REGION: eu-west-3
   # ECR configuration
   ECR_REPOSITORY: congenial-memory
+  # ECS configuration
+  ECS_SERVICE: congenial-memory-service
+  ECS_CLUSTER: congenial-memory-cluster
+  ECS_TASK_DEF: congenial-memory-family
+  ECS_CONTAINER: congenial-memory-app
 
 jobs:
   docker-build:
@@ -52,4 +55,30 @@ jobs:
         run: |
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
           docker push --all-tags $REGISTRY/$REPOSITORY
-          
+
+        # We need to download the task definition of AWS ECS service that we've created earlier. Please note that we need to specify the family of task-definition
+      - name: Download task definition
+        env:
+          ECS_TASK_DEF: ${{ env.ECS_TASK_DEF }}
+        run: |
+          aws ecs describe-task-definition --task-definition $ECS_TASK_DEF --query taskDefinition > task-definition.json
+
+      - name: Fill in the new image ID in the AWS ECS task definition
+        id: task-def
+        # Inserts a container image URI into an Amazon ECS task definition JSON file.
+        # https://github.com/aws-actions/amazon-ecs-render-task-definition
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ECS_CONTAINER }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy AWS ECS task definition
+        # Registers an Amazon ECS task definition and deploys it to an ECS service.
+        # https://github.com/aws-actions/amazon-ecs-deploy-task-definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
