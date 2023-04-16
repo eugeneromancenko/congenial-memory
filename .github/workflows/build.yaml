@@ -1,9 +1,11 @@
 name: Docker build and Push to ECR
+
 on:
   push:
     branches: [ main ]
   # pull_request:
   #   branches: [ main ]
+
 env:
   # we ask you to exclusively use the eu-west-3 Paris AWS region.
   AWS_REGION: eu-west-3
