@@ -8,7 +8,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  pytest:
 
     runs-on: ubuntu-latest
     strategy:
@@ -34,4 +34,4 @@ jobs:
           ruff --format=github --target-version=py37 .
       - name: Test with pytest
         run: |
-          pytest
+          python -m pytest
