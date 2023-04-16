@@ -22,6 +22,6 @@ def create_app():
         """
         Display a 'Hello, World' message.
         """
-        return "Hello, World"
+        return "Hello, World Ver1"
 
     return app
