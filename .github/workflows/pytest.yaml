@@ -1,7 +1,7 @@
 # GitHub provides a Python starter workflow that should work for most Python projects.
 # This guide includes examples that you can use to customize the starter workflow. 
 # For more information, see the https://github.com/actions/starter-workflows/blob/main/ci/python-package.yml
-name: Python package
+name: Pytest
 
 on:
   # only runs on PR
