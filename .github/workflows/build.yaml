@@ -14,6 +14,7 @@ env:
   ECS_CLUSTER: congenial-memory-cluster
   ECS_TASK_DEF: congenial-memory-family
   ECS_CONTAINER: congenial-memory-app
+  IMAGE_TAG: latest
 
 jobs:
   docker-build:
@@ -71,7 +72,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.ECS_CONTAINER }}
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ env.IMAGE_TAG }}
 
       - name: Deploy AWS ECS task definition
         # Registers an Amazon ECS task definition and deploys it to an ECS service.
